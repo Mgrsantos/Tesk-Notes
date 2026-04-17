@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tesk Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --surface: #f8f8f8;
+    --border: #e8e8e8;
+    --text: #1a1a1a;
+    --text-muted: #888;
+    --accent: #f5c518;
+    --sidebar-w: 260px;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --shadow-hover: 0 6px 24px rgba(0,0,0,0.14);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    height: 60px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+
+  .menu-btn {
+    background: none; border: none; cursor: pointer;
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); font-size: 18px;
+    transition: background .15s;
+  }
+  .menu-btn:hover { background: var(--surface); }
+
+  .logo {
+    display: flex; align-items: center; gap: 8px;
+    text-decoration: none; color: var(--text);
+    font-size: 18px; font-weight: 600; letter-spacing: -.3px;
+  }
+  .logo-icon {
+    width: 32px; height: 32px; background: var(--accent);
+    border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; font-size: 16px;
+  }
+
+  .search-bar {
+    flex: 1; max-width: 600px; margin-left: 8px;
+    display: flex; align-items: center;
+    background: var(--surface); border: 1px solid transparent;
+    border-radius: 24px; padding: 0 16px; gap: 10px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .search-bar:focus-within {
+    border-color: var(--border);
+    box-shadow: var(--shadow);
+    background: #fff;
+  }
+  .search-bar input {
+    border: none; background: none; outline: none;
+    font-family: inherit; font-size: 14px; color: var(--text);
+    width: 100%; padding: 10px 0;
+  }
+  .search-bar svg { color: var(--text-muted); flex-shrink: 0; }
+
+  .topbar-actions { margin-left: auto; display: flex; gap: 4px; }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 50%; border: none;
+    background: none; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; color: var(--text-muted); font-size: 16px;
+    transition: background .15s;
+  }
+  .icon-btn:hover { background: var(--surface); }
+
+  /* ── LAYOUT ── */
+  .app-body { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-w); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 8px 0; overflow-y: auto;
+    transition: width .25s;
+  }
+  .sidebar.collapsed { width: 60px; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 16px; cursor: pointer; border-radius: 0 24px 24px 0;
+    margin-right: 12px; font-size: 14px; font-weight: 400;
+    color: var(--text); transition: background .15s; user-select: none;
+    white-space: nowrap; overflow: hidden;
+  }
+  .nav-item:hover { background: var(--surface); }
+  .nav-item.active { background: #fef9e7; font-weight: 500; }
+  .nav-item svg { flex-shrink: 0; }
+
+  .sidebar-divider { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
+
+  .folder-label {
+    padding: 6px 16px 2px; font-size: 11px; font-weight: 600;
+    letter-spacing: .8px; color: var(--text-muted); text-transform: uppercase;
+    white-space: nowrap; overflow: hidden;
+  }
+
+  .folder-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 16px; cursor: pointer; border-radius: 0 24px 24px 0;
+    margin-right: 12px; font-size: 14px; color: var(--text);
+    transition: background .15s; user-select: none;
+    white-space: nowrap; overflow: hidden;
+  }
+  .folder-item:hover { background: var(--surface); }
+  .folder-item.active { background: #fef9e7; font-weight: 500; }
+  .folder-dot {
+    width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+  }
+  .folder-count {
+    margin-left: auto; font-size: 11px; color: var(--text-muted);
+    background: var(--surface); border-radius: 10px; padding: 1px 7px;
+  }
+
+  .add-folder-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 16px; cursor: pointer; font-size: 13px;
+    color: var(--text-muted); border-radius: 0 24px 24px 0;
+    margin-right: 12px; transition: background .15s, color .15s;
+    user-select: none;
+  }
+  .add-folder-btn:hover { background: var(--surface); color: var(--text); }
+
+  /* ── MAIN ── */
+  .main {
+    flex: 1; overflow-y: auto;
+    padding: 24px 32px;
+  }
+
+  /* ── CREATE NOTE ── */
+  .create-card {
+    max-width: 680px; margin: 0 auto 32px;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: #fff; transition: box-shadow .2s;
+  }
+  .create-card:focus-within { box-shadow: var(--shadow-hover); }
+
+  .create-collapsed {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px; cursor: text;
+  }
+  .create-collapsed span {
+    font-size: 14px; color: var(--text-muted); flex: 1;
+  }
+  .create-collapsed-actions { display: flex; gap: 6px; }
+  .create-icon-btn {
+    width: 34px; height: 34px; border-radius: 50%; border: none;
+    background: none; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; color: var(--text-muted); font-size: 15px;
+    transition: background .15s;
+  }
+  .create-icon-btn:hover { background: var(--surface); }
+
+  .create-expanded { display: none; flex-direction: column; }
+  .create-expanded.open { display: flex; }
+
+  .create-title-input, .create-body-input {
+    border: none; outline: none; padding: 14px 18px;
+    font-family: inherit; color: var(--text); background: transparent; width: 100%;
+    resize: none;
+  }
+  .create-title-input { font-size: 15px; font-weight: 500; border-bottom: 1px solid var(--border); }
+  .create-body-input { font-size: 14px; min-height: 80px; line-height: 1.6; }
+
+  .create-footer {
+    display: flex; align-items: center; padding: 8px 12px;
+    border-top: 1px solid var(--border); gap: 6px;
+  }
+  .folder-select-wrap { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .folder-select {
+    border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px;
+    font-family: inherit; font-size: 13px; color: var(--text);
+    background: #fff; outline: none; cursor: pointer;
+  }
+  .color-picker-wrap { display: flex; gap: 5px; align-items: center; }
+  .color-dot {
+    width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent; transition: transform .15s, border-color .15s;
+    flex-shrink: 0;
+  }
+  .color-dot:hover { transform: scale(1.2); }
+  .color-dot.selected { border-color: rgba(0,0,0,.3); }
+
+  .btn {
+    border: none; border-radius: 8px; padding: 7px 16px;
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: background .15s;
+  }
+  .btn-ghost { background: none; color: var(--text-muted); }
+  .btn-ghost:hover { background: var(--surface); }
+  .btn-primary { background: var(--text); color: #fff; }
+  .btn-primary:hover { background: #333; }
+
+  /* ── NOTES GRID ── */
+  .section-label {
+    font-size: 11px; font-weight: 600; letter-spacing: .8px;
+    color: var(--text-muted); text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .notes-section { margin-bottom: 32px; }
+
+  .notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  .note-card {
+    border-radius: var(--radius); border: 1px solid transparent;
+    padding: 14px 16px; cursor: pointer; position: relative;
+    transition: box-shadow .2s, border-color .2s; min-height: 80px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .note-card:hover { box-shadow: var(--shadow-hover); border-color: rgba(0,0,0,.08); }
+  .note-card:hover .note-actions { opacity: 1; }
+
+  .note-title {
+    font-size: 14px; font-weight: 500; line-height: 1.4; word-break: break-word;
+  }
+  .note-body {
+    font-size: 13px; color: var(--text-muted); line-height: 1.6;
+    word-break: break-word; white-space: pre-wrap;
+    display: -webkit-box; -webkit-line-clamp: 8; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .note-folder-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; color: var(--text-muted);
+    background: rgba(0,0,0,.06); border-radius: 20px;
+    padding: 2px 9px; width: fit-content; margin-top: auto;
+  }
+  .note-folder-tag-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .note-actions {
+    position: absolute; bottom: 8px; right: 8px;
+    display: flex; gap: 2px; opacity: 0; transition: opacity .15s;
+  }
+  .note-action-btn {
+    width: 28px; height: 28px; border-radius: 50%; border: none;
+    background: rgba(255,255,255,.8); backdrop-filter: blur(4px);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); font-size: 13px; transition: background .15s, color .15s;
+  }
+  .note-action-btn:hover { background: rgba(0,0,0,.1); color: var(--text); }
+  .note-action-btn.pinned { color: #e67e22; }
+
+  .pin-badge {
+    position: absolute; top: 8px; right: 8px;
+    font-size: 14px; opacity: .5;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 80px 20px; gap: 12px;
+    color: var(--text-muted);
+  }
+  .empty-state svg { opacity: .25; }
+  .empty-state p { font-size: 15px; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.3);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999; opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: #fff; border-radius: 16px;
+    padding: 28px; width: 440px; max-width: 95vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,.15);
+    transform: scale(.95); transition: transform .2s;
+  }
+  .modal-overlay.open .modal { transform: scale(1); }
+
+  .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 18px; }
+  .modal label { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px; }
+  .modal input[type="text"] {
+    width: 100%; border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 14px; font-family: inherit; font-size: 14px; color: var(--text);
+    outline: none; transition: border-color .2s;
+  }
+  .modal input[type="text"]:focus { border-color: #aaa; }
+  .modal-colors {
+    display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 20px;
+  }
+  .modal-color-dot {
+    width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent; transition: transform .15s, border-color .15s;
+  }
+  .modal-color-dot:hover { transform: scale(1.15); }
+  .modal-color-dot.selected { border-color: rgba(0,0,0,.4); }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+
+  /* Note edit modal */
+  .note-modal-body {
+    width: 520px; max-width: 95vw; padding: 0; overflow: hidden;
+  }
+  .note-modal-title {
+    border: none; outline: none; padding: 22px 22px 14px;
+    font-family: inherit; font-size: 17px; font-weight: 500;
+    color: var(--text); width: 100%; background: transparent;
+    border-bottom: 1px solid var(--border);
+  }
+  .note-modal-content {
+    border: none; outline: none; padding: 14px 22px;
+    font-family: inherit; font-size: 14px; color: var(--text);
+    width: 100%; background: transparent; resize: none; min-height: 140px;
+    line-height: 1.7;
+  }
+  .note-modal-footer {
+    display: flex; align-items: center; padding: 10px 14px;
+    border-top: 1px solid var(--border); gap: 6px;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .sidebar { width: 60px; }
+    .nav-item span, .folder-item span, .folder-label,
+    .folder-count, .add-folder-btn span { display: none; }
+    .main { padding: 16px; }
+    .notes-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: #1a1a1a; color: #fff; padding: 10px 20px; border-radius: 24px;
+    font-size: 13px; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; z-index: 2000;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <button class="menu-btn" onclick="toggleSidebar()" title="Menu">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+  <a class="logo" href="#">
+    <div class="logo-icon">📝</div>
+    Tesk Notes
+  </a>
+  <div class="search-bar">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input type="text" placeholder="Pesquisar notas..." id="searchInput" oninput="filterNotes()" />
+  </div>
+  <div class="topbar-actions">
+    <button class="icon-btn" title="Atualizar" onclick="renderAll()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+      </svg>
+    </button>
+    <button class="icon-btn" id="gridToggleBtn" title="Alternar visualização" onclick="toggleGrid()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<!-- BODY -->
+<div class="app-body">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="nav-item active" onclick="setView('all')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+      </svg>
+      <span>Notas</span>
+    </div>
+    <div class="nav-item" onclick="setView('pinned')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/>
+      </svg>
+      <span>Fixadas</span>
+    </div>
+    <div class="nav-item" onclick="setView('archive')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/>
+      </svg>
+      <span>Arquivo</span>
+    </div>
+    <div class="nav-item" onclick="setView('trash')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+      </svg>
+      <span>Lixeira</span>
+    </div>
+
+    <hr class="sidebar-divider">
+    <div class="folder-label">Pastas</div>
+    <div id="folderList"></div>
+    <div class="add-folder-btn" onclick="openFolderModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      <span>Nova pasta</span>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main" id="main">
+
+    <!-- CREATE NOTE -->
+    <div class="create-card" id="createCard" style="display:none">
+      <div class="create-collapsed" id="createCollapsed" onclick="expandCreate()">
+        <span>Criar uma nota...</span>
+        <div class="create-collapsed-actions" onclick="event.stopPropagation()">
+          <button class="create-icon-btn" title="Lista" onclick="expandCreate('list')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/>
+              <circle cx="5" cy="6" r="1" fill="currentColor"/><circle cx="5" cy="12" r="1" fill="currentColor"/><circle cx="5" cy="18" r="1" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="create-expanded" id="createExpanded">
+        <input type="text" class="create-title-input" id="createTitle" placeholder="Título" />
+        <textarea class="create-body-input" id="createBody" placeholder="Criar uma nota..." rows="3"></textarea>
+        <div class="create-footer">
+          <div class="color-picker-wrap" id="createColors"></div>
+          <div class="folder-select-wrap">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+            <select class="folder-select" id="createFolder">
+              <option value="">Sem pasta</option>
+            </select>
+          </div>
+          <button class="btn btn-ghost" onclick="cancelCreate()">Cancelar</button>
+          <button class="btn btn-primary" onclick="saveNote()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTES AREA -->
+    <div id="notesArea"></div>
+
+  </main>
+</div>
+
+<!-- FOLDER MODAL -->
+<div class="modal-overlay" id="folderModal">
+  <div class="modal">
+    <h3 id="folderModalTitle">Nova pasta</h3>
+    <label>Nome da pasta</label>
+    <input type="text" id="folderNameInput" placeholder="Ex: Mercado, Senhas..." />
+    <label style="margin-top:14px">Cor da pasta</label>
+    <div class="modal-colors" id="modalColors"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeFolderModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveFolder()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTE EDIT MODAL -->
+<div class="modal-overlay" id="noteModal">
+  <div class="modal note-modal-body" id="noteModalInner">
+    <input type="text" class="note-modal-title" id="noteModalTitle" placeholder="Título" />
+    <textarea class="note-modal-content" id="noteModalContent" placeholder="Nota..." rows="6"></textarea>
+    <div class="note-modal-footer">
+      <div class="color-picker-wrap" id="noteModalColors"></div>
+      <div class="folder-select-wrap" style="margin-left:auto">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+        </svg>
+        <select class="folder-select" id="noteModalFolder">
+          <option value="">Sem pasta</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost" onclick="closeNoteModal()">Fechar</button>
+      <button class="btn btn-primary" onclick="updateNote()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──
+const PALETTE = [
+  { id: 'white', hex: '#ffffff', label: 'Branco' },
+  { id: 'blue',  hex: '#d4e6f1', label: 'Azul' },
+  { id: 'green', hex: '#d5f5e3', label: 'Verde' },
+  { id: 'yellow',hex: '#fef9c3', label: 'Amarelo' },
+  { id: 'pink',  hex: '#fce4ec', label: 'Rosa' },
+  { id: 'purple',hex: '#ede7f6', label: 'Lilás' },
+  { id: 'orange',hex: '#fce8d8', label: 'Laranja' },
+  { id: 'gray',  hex: '#f0f0f0', label: 'Cinza' },
+];
+
+let state = JSON.parse(localStorage.getItem('teskNotes') || 'null') || {
+  folders: [
+    { id: 'f1', name: 'Mercado', color: '#fce4ec' },
+    { id: 'f2', name: 'Trabalho', color: '#d4e6f1' },
+  ],
+  notes: [
+    { id: 'n1', title: 'Treino - Exemplo', body: 'Treino de braço...', color: '#d4e6f1', folderId: '', pinned: true, archived: false, deleted: false, createdAt: Date.now()-1000 },
+    { id: 'n2', title: 'Mercado - Exemplo', body: 'Comprar Sal', color: '#fce4ec', folderId: 'f1', pinned: false, archived: false, deleted: false, createdAt: Date.now()-500 },
+  ],
+  view: 'all',
+  gridMode: true,
+};
+
+function save() { localStorage.setItem('teskNotes', JSON.stringify(state)); }
+
+// ── UTILITIES ──
+function uid() { return Math.random().toString(36).slice(2,9); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+let createSelectedColor = '#ffffff';
+let noteModalId = null;
+let folderModalEditing = null;
+let folderSelectedColor = '#fef9c3';
+
+// ── SIDEBAR ──
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+function setView(v) {
+  state.view = v; save(); renderAll();
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const items = document.querySelectorAll('.nav-item');
+  const map = ['all','pinned','archive','trash'];
+  const idx = map.indexOf(v);
+  if (idx >= 0) items[idx].classList.add('active');
+  document.querySelectorAll('.folder-item').forEach(el => el.classList.remove('active'));
+}
+
+function setFolderView(fId) {
+  state.view = 'folder:' + fId; save(); renderAll();
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.folder-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.fid === fId);
+  });
+}
+
+// ── GRID TOGGLE ──
+function toggleGrid() {
+  state.gridMode = !state.gridMode; save(); renderAll();
+}
+
+// ── RENDER SIDEBAR FOLDERS ──
+function renderFolders() {
+  const list = document.getElementById('folderList');
+  list.innerHTML = '';
+  state.folders.forEach(f => {
+    const count = state.notes.filter(n => n.folderId === f.id && !n.archived && !n.deleted).length;
+    const div = document.createElement('div');
+    div.className = 'folder-item'; div.dataset.fid = f.id;
+    if (state.view === 'folder:' + f.id) div.classList.add('active');
+    div.onclick = () => setFolderView(f.id);
+    div.innerHTML = `
+  <span class="folder-dot" style="background:${f.color}"></span>
+  <span>${f.name}</span>
+  <span class="folder-count">${count}</span>
+
+  <button style="background:none;border:none;cursor:pointer;padding:2px 4px;border-radius:4px;color:#aaa;font-size:13px"
+    title="Editar pasta"
+    onclick="event.stopPropagation();editFolder('${f.id}')">✎</button>
+
+  <button style="background:none;border:none;cursor:pointer;padding:2px 4px;border-radius:4px;color:#aaa;font-size:13px"
+    title="Excluir pasta"
+    onclick="event.stopPropagation();deleteFolder('${f.id}')">🗑</button>
+`;
+    list.appendChild(div);
+  });
+
+  // update folder selects
+  const opts = '<option value="">Sem pasta</option>' + state.folders.map(f =>
+    `<option value="${f.id}">${f.name}</option>`).join('');
+  document.getElementById('createFolder').innerHTML = opts;
+  const nmf = document.getElementById('noteModalFolder');
+  if (nmf) nmf.innerHTML = opts;
+}
+
+// ── RENDER NOTES ──
+function getFilteredNotes(searchQ) {
+  let notes = [...state.notes];
+  const v = state.view;
+
+  if (v === 'trash') return notes.filter(n => n.deleted);
+  if (v === 'archive') return notes.filter(n => n.archived && !n.deleted);
+
+  notes = notes.filter(n => !n.deleted && !n.archived);
+
+  if (v === 'pinned') notes = notes.filter(n => n.pinned);
+  else if (v.startsWith('folder:')) {
+    const fId = v.split(':')[1];
+    notes = notes.filter(n => n.folderId === fId);
+  }
+
+  if (searchQ) {
+    const q = searchQ.toLowerCase();
+    notes = notes.filter(n =>
+      (n.title||'').toLowerCase().includes(q) || (n.body||'').toLowerCase().includes(q)
+    );
+  }
+
+  return notes;
+}
+
+function renderAll() {
+  renderFolders();
+  const searchQ = document.getElementById('searchInput').value.trim();
+  const notes = getFilteredNotes(searchQ);
+  const area = document.getElementById('notesArea');
+  const createCard = document.getElementById('createCard');
+
+  // Show create card only for notes views
+  const isActionable = !['trash'].includes(state.view);
+  createCard.style.display = isActionable ? 'block' : 'none';
+
+  // Grid mode
+  const gridStyle = state.gridMode
+    ? 'display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;'
+    : 'display:grid;grid-template-columns:1fr;max-width:680px;margin:0 auto;gap:10px;';
+
+  if (notes.length === 0) {
+    area.innerHTML = `<div class="empty-state">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+      </svg>
+      <p>Nenhuma nota por aqui</p>
+    </div>`;
+    return;
+  }
+
+  const isTrash = state.view === 'trash';
+  const isArchive = state.view === 'archive';
+
+  // Split pinned/other (only for 'all' and folder views)
+  const showPinSection = (state.view === 'all' || state.view.startsWith('folder:')) && !searchQ;
+  const pinned = showPinSection ? notes.filter(n => n.pinned) : [];
+  const others = showPinSection ? notes.filter(n => !n.pinned) : notes;
+
+  let html = '';
+
+  if (showPinSection && pinned.length > 0) {
+    html += `<div class="notes-section"><div class="section-label">Fixadas</div><div style="${gridStyle}">`;
+    pinned.forEach(n => html += noteCard(n, isTrash, isArchive));
+    html += `</div></div>`;
+  }
+
+  if (others.length > 0) {
+    const label = showPinSection && pinned.length > 0 ? 'Outras' : '';
+    html += `<div class="notes-section">`;
+    if (label) html += `<div class="section-label">${label}</div>`;
+    html += `<div style="${gridStyle}">`;
+    others.forEach(n => html += noteCard(n, isTrash, isArchive));
+    html += `</div></div>`;
+  }
+
+  area.innerHTML = html;
+}
+
+function noteCard(n, isTrash, isArchive) {
+  const folder = state.folders.find(f => f.id === n.folderId);
+  const bg = n.color || '#ffffff';
+  const isDark = false;
+
+  let actions = '';
+  if (isTrash) {
+    actions = `
+      <button class="note-action-btn" title="Restaurar" onclick="event.stopPropagation();restoreNote('${n.id}')">↩</button>
+      <button class="note-action-btn" title="Excluir permanentemente" onclick="event.stopPropagation();deleteForever('${n.id}')">🗑</button>`;
+  } else {
+    actions = `
+      <button class="note-action-btn ${n.pinned?'pinned':''}" title="${n.pinned?'Desafixar':'Fixar'}" onclick="event.stopPropagation();togglePin('${n.id}')">
+        ${n.pinned ? '📌' : '📍'}
+      </button>
+      <button class="note-action-btn" title="${isArchive?'Desarquivar':'Arquivar'}" onclick="event.stopPropagation();toggleArchive('${n.id}')">
+        ${isArchive ? '📤' : '📥'}
+      </button>
+      <button class="note-action-btn" title="Apagar" onclick="event.stopPropagation();trashNote('${n.id}')">🗑</button>`;
+  }
+
+  const folderTag = folder
+    ? `<span class="note-folder-tag"><span class="note-folder-tag-dot" style="background:${folder.color}"></span>${folder.name}</span>`
+    : '';
+
+  const pinBadge = n.pinned ? `<span class="pin-badge">📌</span>` : '';
+
+  return `<div class="note-card" style="background:${bg}" onclick="openNoteModal('${n.id}')">
+    ${pinBadge}
+    ${n.title ? `<div class="note-title">${escHtml(n.title)}</div>` : ''}
+    ${n.body ? `<div class="note-body">${escHtml(n.body)}</div>` : ''}
+    ${folderTag}
+    <div class="note-actions">${actions}</div>
+  </div>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── CREATE NOTE ──
+function buildColorPicker(containerId, selectedColor, onSelect) {
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  c.innerHTML = PALETTE.map(p => `
+    <span class="color-dot ${p.hex === selectedColor ? 'selected' : ''}"
+      style="background:${p.hex};border-color:${p.hex === selectedColor ? 'rgba(0,0,0,.3)' : 'transparent'}"
+      title="${p.label}"
+      onclick="(${onSelect})('${p.hex}','${containerId}')"></span>
+  `).join('');
+}
+
+function selectColor(hex, containerId) {
+  if (containerId === 'createColors') {
+    createSelectedColor = hex;
+    document.getElementById('createCard').style.background = hex;
+  } else if (containerId === 'noteModalColors') {
+    if (noteModalId) {
+      const n = state.notes.find(x => x.id === noteModalId);
+      if (n) { n.color = hex; save(); }
+    }
+    document.getElementById('noteModalInner').style.background = hex;
+  }
+  buildColorPicker(containerId, hex, 'selectColor');
+}
+
+function expandCreate() {
+  document.getElementById('createCollapsed').style.display = 'none';
+  document.getElementById('createExpanded').classList.add('open');
+  buildColorPicker('createColors', createSelectedColor, 'selectColor');
+  document.getElementById('createTitle').focus();
+}
+
+function cancelCreate() {
+  document.getElementById('createCollapsed').style.display = 'flex';
+  document.getElementById('createExpanded').classList.remove('open');
+  document.getElementById('createTitle').value = '';
+  document.getElementById('createBody').value = '';
+  document.getElementById('createFolder').value = '';
+  createSelectedColor = '#ffffff';
+  document.getElementById('createCard').style.background = '#fff';
+}
+
+function saveNote() {
+  const title = document.getElementById('createTitle').value.trim();
+  const body = document.getElementById('createBody').value.trim();
+  if (!title && !body) { showToast('Escreva algo antes de salvar'); return; }
+  const folderId = document.getElementById('createFolder').value;
+  state.notes.unshift({
+    id: uid(), title, body, color: createSelectedColor,
+    folderId, pinned: false, archived: false, deleted: false, createdAt: Date.now()
+  });
+  save(); cancelCreate(); renderAll(); showToast('Nota salva');
+}
+
+// ── NOTE ACTIONS ──
+function togglePin(id) {
+  const n = state.notes.find(x => x.id === id);
+  if (n) { n.pinned = !n.pinned; save(); renderAll(); showToast(n.pinned ? 'Nota fixada' : 'Nota desafixada'); }
+}
+
+function toggleArchive(id) {
+  const n = state.notes.find(x => x.id === id);
+  if (n) { n.archived = !n.archived; save(); renderAll(); showToast(n.archived ? 'Nota arquivada' : 'Nota restaurada'); }
+}
+
+function trashNote(id) {
+  const n = state.notes.find(x => x.id === id);
+  if (n) { n.deleted = true; save(); renderAll(); showToast('Nota movida para lixeira'); }
+}
+
+function restoreNote(id) {
+  const n = state.notes.find(x => x.id === id);
+  if (n) { n.deleted = false; save(); renderAll(); showToast('Nota restaurada'); }
+}
+
+function deleteForever(id) {
+  if (!confirm('Excluir permanentemente?')) return;
+  state.notes = state.notes.filter(x => x.id !== id);
+  save(); renderAll(); showToast('Nota excluída');
+}
+
+// ── NOTE MODAL ──
+function openNoteModal(id) {
+  const n = state.notes.find(x => x.id === id);
+  if (!n) return;
+  if (n.deleted) return;
+  noteModalId = id;
+  document.getElementById('noteModalTitle').value = n.title || '';
+  document.getElementById('noteModalContent').value = n.body || '';
+  document.getElementById('noteModalInner').style.background = n.color || '#fff';
+
+  // rebuild folder select & set value
+  const opts = '<option value="">Sem pasta</option>' + state.folders.map(f =>
+    `<option value="${f.id}" ${f.id === n.folderId ? 'selected' : ''}>${f.name}</option>`).join('');
+  document.getElementById('noteModalFolder').innerHTML = opts;
+
+  buildColorPicker('noteModalColors', n.color || '#ffffff', 'selectColor');
+  document.getElementById('noteModal').classList.add('open');
+}
+
+function closeNoteModal() {
+  document.getElementById('noteModal').classList.remove('open');
+  noteModalId = null; renderAll();
+}
+
+function updateNote() {
+  if (!noteModalId) return;
+  const n = state.notes.find(x => x.id === noteModalId);
+  if (!n) return;
+  n.title = document.getElementById('noteModalTitle').value.trim();
+  n.body = document.getElementById('noteModalContent').value.trim();
+  n.folderId = document.getElementById('noteModalFolder').value;
+  save(); closeNoteModal(); showToast('Nota atualizada');
+}
+
+// close modal on overlay click
+document.getElementById('noteModal').addEventListener('click', function(e) {
+  if (e.target === this) closeNoteModal();
+});
+
+// ── FOLDER MODAL ──
+function openFolderModal(editId) {
+  folderModalEditing = editId || null;
+  folderSelectedColor = editId
+    ? (state.folders.find(f => f.id === editId)?.color || '#fef9c3')
+    : '#fef9c3';
+  document.getElementById('folderModalTitle').textContent = editId ? 'Editar pasta' : 'Nova pasta';
+  document.getElementById('folderNameInput').value = editId
+    ? (state.folders.find(f => f.id === editId)?.name || '') : '';
+  buildFolderColors();
+  document.getElementById('folderModal').classList.add('open');
+  setTimeout(() => document.getElementById('folderNameInput').focus(), 100);
+}
+
+function editFolder(id) { openFolderModal(id); }
+
+function buildFolderColors() {
+  document.getElementById('modalColors').innerHTML = PALETTE.map(p => `
+    <span class="modal-color-dot ${p.hex === folderSelectedColor ? 'selected' : ''}"
+      style="background:${p.hex}"
+      onclick="selectFolderColor('${p.hex}')"></span>
+  `).join('');
+}
+
+function selectFolderColor(hex) {
+  folderSelectedColor = hex; buildFolderColors();
+}
+
+function closeFolderModal() {
+  document.getElementById('folderModal').classList.remove('open');
+  folderModalEditing = null;
+}
+
+function saveFolder() {
+  const name = document.getElementById('folderNameInput').value.trim();
+  if (!name) { showToast('Digite um nome para a pasta'); return; }
+  if (folderModalEditing) {
+    const f = state.folders.find(x => x.id === folderModalEditing);
+    if (f) { f.name = name; f.color = folderSelectedColor; }
+  } else {
+    state.folders.push({ id: uid(), name, color: folderSelectedColor });
+  }
+  save(); closeFolderModal(); renderAll(); showToast(folderModalEditing ? 'Pasta atualizada' : 'Pasta criada');
+}
+
+document.getElementById('folderModal').addEventListener('click', function(e) {
+  if (e.target === this) closeFolderModal();
+});
+
+document.getElementById('folderNameInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveFolder();
+});
+
+// ── SEARCH ──
+function filterNotes() { renderAll(); }
+
+// ── KEYBOARD SHORTCUTS ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeNoteModal(); closeFolderModal();
+    cancelCreate();
+  }
+});
+
+// ── INIT ──
+renderAll();
+buildColorPicker('createColors', createSelectedColor, 'selectColor');
+</script>
+</body>
+</html>
